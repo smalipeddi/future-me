@@ -2,9 +2,9 @@
   "name": "future-me",
   "version": "1.0.0",
   "type": "module",
-  "scripts": {
-    "build": "mkdir -p public && echo 'Bypassing framework compilation step.'"
-  },
+"scripts": {
+  "build": "mkdir -p public && echo '<h1>Hello from Future Me</h1>' > public/index.html"
+},
   "dependencies": {
     "@google/genai": "^2.9.0",
     "cors": "^2.8.5",

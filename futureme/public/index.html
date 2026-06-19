@@ -274,7 +274,7 @@ document.getElementById('futureMeForm').addEventListener('submit', async (e) => 
     };
 
     try {
-        const response = await fetch('http://localhost:3000/api/generate-futureme', {
+        const response = await fetch('/api/generate-futureme', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)

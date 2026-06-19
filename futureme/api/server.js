@@ -1,7 +1,9 @@
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config(); // Loads the GEMINI_API_KEY from your .env file
-const { GoogleGenAI } = require('@google/genai');
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import { GoogleGenAI } from '@google/genai'; // Only declare this ONCE here
+
+dotenv.config();
 
 // Initialize the Google Gen AI SDK
 // It automatically detects the GEMINI_API_KEY environment variable
@@ -11,21 +13,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-import { GoogleGenAI } from '@google/genai';
-
-// Explicitly pass the API key from your environment variables
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
-async function run() {
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
-    contents: 'Hello!',
-  });
-
-  console.log(response.text);
-}
-
-run();
 
 // -------------------------------------------------------------
 // Endpoint 1: Generate Initial FutureMe Profile (Live API)
@@ -129,4 +116,5 @@ Reply in 2-5 short paragraphs. Give at least one clear action.
     }
 });
 
-app.listen(3000, () => console.log('FutureMe engine running live on port 3000'));
+//app.listen(3000, () => console.log('FutureMe engine running live on port 3000'));
+export default app;

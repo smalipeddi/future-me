@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FutureMe Dashboard</title>
+    
+    <style>
+        :root {
+            /* Vibrant background colors so the glass effect pops */
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
+            --accent: #6366f1;
+            --text: #f8fafc;
+            --text-muted: #cbd5e1;
+            
+            /* Glassmorphism Specs */
+            --glass-bg: rgba(255, 255, 255, 0.04);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-blur: blur(16px);
+        }
+        
+        body {
+            background: var(--bg-gradient);
+            color: var(--text);
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 650px;
+        }
+
+        h2, h3 {
+            color: #ffffff;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+        
+        /* Glass Setup for Form Panel */
+        #futureMeForm {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            padding: 2.5rem;
+            border-radius: 1.25rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+        
+        /* Semitransparent Inputs */
+        input, textarea, select {
+            width: 100%;
+            padding: 0.85rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(15, 23, 42, 0.6);
+            color: #fff;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 12px rgba(99, 102, 241, 0.3);
+            background: rgba(15, 23, 42, 0.8);
+        }
+        
+        button {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+            border: none;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+            transition: all 0.2s ease;
+        }
+        
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+        }
+        
+        /* Premium Loader Styles */
+        #loader {
+            display: none;
+            text-align: center;
+            padding: 5rem 0;
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 1.25rem;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1.5rem;
+        }
+        
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Glass Result Cards */
+        #resultView {
+            display: none;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            padding: 2rem;
+            border-radius: 1.25rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+            
+            /* Keeping your explicit Calibri styling preferences active */
+            font-family: 'Calibri', 'Candara', 'Segoe UI', sans-serif;
+            font-size: 0.8rem;
+            letter-spacing: 0.2px;
+        }
+
+        /* Ambient subtle left-indicators inside the glass elements */
+        .card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 5px;
+            background: var(--accent);
+        }
+        .card.identity-card::before { background: #10b981; }
+        .card.moves-card::before { background: #f59e0b; }
+        .card.habit-card::before { background: #ec4899; }
+        
+        .identity-badge {
+            background: rgba(16, 185, 129, 0.15);
+            color: #a7f3d0;
+            padding: 0.35rem 1rem;
+            border-radius: 2rem;
+            display: inline-block;
+            font-size: 0.95rem;
+            margin-top: 0.5rem;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            font-family: 'Calibri', sans-serif;
+        }
+        
+        .moves-list {
+            padding-left: 1.25rem;
+        }
+        
+        .moves-list li {
+            margin-bottom: 0.85rem;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Configuration Form -->
+    <form id="futureMeForm">
+        <h2>Connect with FutureMe</h2>
+        <div class="form-group">
+            <label for="name">Name</label>
+            <input type="text" id="name" required placeholder="Alex">
+        </div>
+        <div class="form-group">
+            <label for="age">Age</label>
+            <input type="number" id="age" required placeholder="28">
+        </div>
+        <div class="form-group">
+            <label for="goal">Dream / Goal</label>
+            <textarea id="goal" rows="2" required placeholder="Launch a profitable independent studio software application..."></textarea>
+        </div>
+        <div class="form-group">
+            <label for="struggle">Current Struggle</label>
+            <textarea id="struggle" rows="2" required placeholder="Paralysis by analysis and falling into unproductive doomscrolling loops..."></textarea>
+        </div>
+        <div class="form-group">
+            <label for="oneYearVision">One-Year Vision</label>
+            <textarea id="oneYearVision" rows="2" required placeholder="Working completely for myself with 10k monthly recurring revenue..."></textarea>
+        </div>
+        <div class="form-group">
+            <label for="tone">FutureMe Tone</label>
+            <select id="tone">
+                <option value="Compassionate & Empathetic">Compassionate & Empathetic</option>
+                <option value="Sharp & Direct">Sharp & Direct (Tough Love)</option>
+                <option value="Stoic & Grounded">Stoic & Grounded</option>
+            </select>
+        </div>
+        <button type="submit">Generate My FutureMe</button>
+    </form>
+
+    <!-- Premium Loading State -->
+    <div id="loader">
+        <div class="spinner"></div>
+        <h3 id="loaderText">Creating your future identity…</h3>
+    </div>
+
+    <!-- Output Dashboard Panel -->
+   <div id="resultView">
+        <div class="card">
+            <h3>Message from your FutureMe</h3>
+            <p id="outMessage" style="line-height: 1.6; font-style: italic; color: #e2e8f0;"></p>
+        </div>
+
+        <div class="card identity-card">
+            <h3>Future Identity</h3>
+            <div id="outIdentity" class="identity-badge"></div>
+        </div>
+
+        <div class="card moves-card">
+            <h3>Next 3 Moves</h3>
+            <ol id="outMoves" class="moves-list"></ol>
+        </div>
+
+        <div class="card habit-card">
+            <h3>One Habit to Start Today</h3>
+            <p id="outHabit" style="font-weight: 600; color: #f472b6;"></p>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('futureMeForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    // UI Transitions
+    document.getElementById('futureMeForm').style.display = 'none';
+    document.getElementById('loader').style.display = 'block';
+    
+    // Package Form Payload
+    const payload = {
+        name: document.getElementById('name').value,
+        age: document.getElementById('age').value,
+        goal: document.getElementById('goal').value,
+        struggle: document.getElementById('struggle').value,
+        oneYearVision: document.getElementById('oneYearVision').value,
+        tone: document.getElementById('tone').value
+    };
+
+    try {
+        const response = await fetch('http://localhost:3000/api/generate-futureme', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) throw new Error('Timeline connection error');
+        const data = await response.json();
+
+        // Populate Result Cards
+        document.getElementById('outMessage').innerText = data.message;
+        document.getElementById('outIdentity').innerText = data.futureIdentity;
+        document.getElementById('outHabit').innerText = data.habit;
+        
+        const movesList = document.getElementById('outMoves');
+        movesList.innerHTML = ''; // Reset list
+        data.nextMoves.forEach(move => {
+            const li = document.createElement('li');
+            li.innerText = move;
+            movesList.appendChild(li);
+        });
+
+        // Toggle Views
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('resultView').style.display = 'block';
+
+    } catch (error) {
+        alert(error.message);
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('futureMeForm').style.display = 'block';
+    }
+});
+</script>
+</body>
+</html>

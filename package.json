@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "build": "echo 'No compilation step required for this project architecture.'"
+    "build": "mkdir -p public && echo 'Bypassing framework compilation step.'"
   },
   "dependencies": {
     "@google/genai": "^0.1.1",

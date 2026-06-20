@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
 "scripts": {
-  "build": "mkdir -p public && echo '<h1>Hello from Future Me</h1>' > public/index.html"
+  "start": "node api/server.js"
 },
   "dependencies": {
     "@google/genai": "^2.9.0",

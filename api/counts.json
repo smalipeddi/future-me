@@ -1,4 +1,10 @@
 {
-  "visits": 1,
-  "likes": 7
+  "visits": 2,
+  "likes": 12,
+  "ips": [
+    "::1"
+  ],
+  "likedIps": [
+    "::1"
+  ]
 }

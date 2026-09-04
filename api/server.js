@@ -14,6 +14,8 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const app = express();
 app.use(cors());
 app.use(express.json());
+// Respect X-Forwarded-For when behind proxies (so we can detect client IPs)
+app.set('trust proxy', true);
 
 // Simple JSON-backed counters store (visits, likes)
 const COUNTS_PATH = path.join(path.dirname(new URL(import.meta.url).pathname), 'counts.json');
@@ -24,7 +26,7 @@ async function loadCounts() {
         return JSON.parse(txt);
     } catch (err) {
         // Initialize if missing or invalid
-        const initial = { visits: 0, likes: 0 };
+        const initial = { visits: 0, likes: 0, ips: [], likedIps: [] };
         try { await fs.writeFile(COUNTS_PATH, JSON.stringify(initial, null, 2)); } catch (e) {}
         return initial;
     }
@@ -41,23 +43,48 @@ async function saveCounts(counts) {
 // Endpoint: read counts
 app.get('/api/counts', async (req, res) => {
     const counts = await loadCounts();
-    res.json(counts);
+    // Determine client IP (used only to report whether this client has liked)
+    const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip || '').toString().split(',')[0].trim();
+    const liked = (counts.likedIps || []).includes(ip);
+    // Do not expose raw IP lists
+    res.json({ visits: counts.visits || 0, likes: counts.likes || 0, liked: !!liked });
 });
 
 // Endpoint: increment visits (called when a user opens the app)
 app.post('/api/visit', async (req, res) => {
     const counts = await loadCounts();
-    counts.visits = (counts.visits || 0) + 1;
-    await saveCounts(counts);
-    res.json(counts);
+    // Determine client IP (trust proxy must be enabled to use x-forwarded-for)
+    const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip || '').toString().split(',')[0].trim();
+    if (!ip) return res.status(400).json({ error: 'Unable to determine client IP' });
+
+    // If this IP is new, increment visits and record it
+    counts.ips = counts.ips || [];
+    if (!counts.ips.includes(ip)) {
+        counts.ips.push(ip);
+        counts.visits = (counts.visits || 0) + 1;
+        await saveCounts(counts);
+    }
+
+    res.json({ visits: counts.visits || 0, likes: counts.likes || 0 });
 });
 
 // Endpoint: increment likes (called when the like button is clicked)
 app.post('/api/like', async (req, res) => {
     const counts = await loadCounts();
+    // Determine client IP (trust proxy must be enabled to use x-forwarded-for)
+    const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip || '').toString().split(',')[0].trim();
+    if (!ip) return res.status(400).json({ error: 'Unable to determine client IP' });
+
+    counts.likedIps = counts.likedIps || [];
+    // If this IP already liked, don't increment again
+    if (counts.likedIps.includes(ip)) {
+        return res.json({ visits: counts.visits || 0, likes: counts.likes || 0, liked: true });
+    }
+
     counts.likes = (counts.likes || 0) + 1;
+    counts.likedIps.push(ip);
     await saveCounts(counts);
-    res.json(counts);
+    res.json({ visits: counts.visits || 0, likes: counts.likes || 0, liked: true });
 });
 
 

@@ -198,7 +198,7 @@
         </svg>
         <span id="likeCount">0</span>
     </button>
-    <div id="visitDisplay" style="padding:8px 10px;border-radius:999px;background:rgba(255,255,255,0.03);color:var(--text-muted);font-size:0.9rem;backdrop-filter:var(--glass-blur);">Visits: <span id="visitCount">0</span></div>
+    <button id="visitBtn" aria-label="Profile visits" style="padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.03);color:var(--text-muted);font-size:0.95rem;backdrop-filter:var(--glass-blur);cursor:default;">Profile visits: <span id="visitCount">0</span></button>
 </div>
 
 <div class="container">
@@ -349,6 +349,16 @@ function updateUI(counts) {
     const visitCount = document.getElementById('visitCount');
     likeCount.innerText = counts.likes || 0;
     visitCount.innerText = counts.visits || 0;
+    const likeBtn = document.getElementById('likeBtn');
+    if (counts.liked) {
+        likeBtn.disabled = true;
+        likeBtn.style.opacity = '0.6';
+        likeBtn.title = 'You already liked this';
+    } else {
+        likeBtn.disabled = false;
+        likeBtn.style.opacity = '1';
+        likeBtn.title = 'Like';
+    }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -362,10 +372,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Wire like button
     const likeBtn = document.getElementById('likeBtn');
     likeBtn.addEventListener('click', async () => {
+        // optimistically prevent double clicks
         likeBtn.disabled = true;
         const updated = await incrementLike();
-        if (updated) updateUI(updated);
-        setTimeout(() => { likeBtn.disabled = false; }, 600);
+        if (updated) {
+            updateUI(updated);
+            if (updated.liked) {
+                // keep disabled permanently if server reports already liked
+                likeBtn.disabled = true;
+                likeBtn.style.opacity = '0.6';
+            } else {
+                likeBtn.disabled = false;
+            }
+        } else {
+            // re-enable on error
+            likeBtn.disabled = false;
+        }
     });
 });
 </script>

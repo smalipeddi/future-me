@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai'; // Only declare this ONCE here
+import fs from 'fs/promises';
+import path from 'path';
 
 dotenv.config();
 
@@ -12,6 +14,51 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Simple JSON-backed counters store (visits, likes)
+const COUNTS_PATH = path.join(path.dirname(new URL(import.meta.url).pathname), 'counts.json');
+
+async function loadCounts() {
+    try {
+        const txt = await fs.readFile(COUNTS_PATH, 'utf8');
+        return JSON.parse(txt);
+    } catch (err) {
+        // Initialize if missing or invalid
+        const initial = { visits: 0, likes: 0 };
+        try { await fs.writeFile(COUNTS_PATH, JSON.stringify(initial, null, 2)); } catch (e) {}
+        return initial;
+    }
+}
+
+async function saveCounts(counts) {
+    try {
+        await fs.writeFile(COUNTS_PATH, JSON.stringify(counts, null, 2));
+    } catch (err) {
+        console.error('Failed to write counts:', err);
+    }
+}
+
+// Endpoint: read counts
+app.get('/api/counts', async (req, res) => {
+    const counts = await loadCounts();
+    res.json(counts);
+});
+
+// Endpoint: increment visits (called when a user opens the app)
+app.post('/api/visit', async (req, res) => {
+    const counts = await loadCounts();
+    counts.visits = (counts.visits || 0) + 1;
+    await saveCounts(counts);
+    res.json(counts);
+});
+
+// Endpoint: increment likes (called when the like button is clicked)
+app.post('/api/like', async (req, res) => {
+    const counts = await loadCounts();
+    counts.likes = (counts.likes || 0) + 1;
+    await saveCounts(counts);
+    res.json(counts);
+});
 
 
 // -------------------------------------------------------------
@@ -117,4 +164,14 @@ Reply in 2-5 short paragraphs. Give at least one clear action.
 });
 
 //app.listen(3000, () => console.log('FutureMe engine running live on port 3000'));
+// Serve static files from project root (so the server can also serve index.html during local dev)
+const PROJECT_ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+app.use(express.static(PROJECT_ROOT));
+
+// Start server when run directly (allows `npm start` to work)
+const PORT = process.env.PORT || 3000;
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => console.log(`FutureMe running at http://localhost:${PORT}`));
+}
+
 export default app;

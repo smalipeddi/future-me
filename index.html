@@ -190,6 +190,17 @@
 </head>
 <body>
 
+<!-- Top-right Like / Visit widget -->
+<div id="likeWidget" style="position:fixed; top:18px; right:18px; z-index:9999; display:flex; gap:8px; align-items:center;">
+    <button id="likeBtn" title="Like" style="display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:999px;border:none;background:rgba(255,255,255,0.06);color:var(--text);backdrop-filter:var(--glass-blur);cursor:pointer;"> 
+        <svg id="likeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M12 21s-7.5-4.868-9.5-7.143C-0.5 9.857 3.2 4 8 4c2.4 0 3.7 1.4 4 2.1.3-.7 1.6-2.1 4-2.1 4.8 0 8.5 5.857 5.5 9.857C19.5 16.132 12 21 12 21z" fill="currentColor"/>
+        </svg>
+        <span id="likeCount">0</span>
+    </button>
+    <div id="visitDisplay" style="padding:8px 10px;border-radius:999px;background:rgba(255,255,255,0.03);color:var(--text-muted);font-size:0.9rem;backdrop-filter:var(--glass-blur);">Visits: <span id="visitCount">0</span></div>
+</div>
+
 <div class="container">
     <!-- Configuration Form -->
     <form id="futureMeForm">
@@ -305,6 +316,57 @@ document.getElementById('futureMeForm').addEventListener('submit', async (e) => 
         document.getElementById('loader').style.display = 'none';
         document.getElementById('futureMeForm').style.display = 'block';
     }
+});
+</script>
+
+<script>
+// Visit + Like counter frontend logic
+async function fetchCounts() {
+    try {
+        const res = await fetch('/api/counts');
+        if (!res.ok) return null;
+        return await res.json();
+    } catch (e) { return null; }
+}
+
+async function incrementVisit() {
+    try {
+        await fetch('/api/visit', { method: 'POST' });
+    } catch (e) { /* ignore */ }
+}
+
+async function incrementLike() {
+    try {
+        const res = await fetch('/api/like', { method: 'POST' });
+        if (!res.ok) return null;
+        return await res.json();
+    } catch (e) { return null; }
+}
+
+function updateUI(counts) {
+    if (!counts) return;
+    const likeCount = document.getElementById('likeCount');
+    const visitCount = document.getElementById('visitCount');
+    likeCount.innerText = counts.likes || 0;
+    visitCount.innerText = counts.visits || 0;
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    // Increment visit when the page is opened
+    incrementVisit();
+
+    // Fetch latest counts and render
+    const counts = await fetchCounts();
+    updateUI(counts);
+
+    // Wire like button
+    const likeBtn = document.getElementById('likeBtn');
+    likeBtn.addEventListener('click', async () => {
+        likeBtn.disabled = true;
+        const updated = await incrementLike();
+        if (updated) updateUI(updated);
+        setTimeout(() => { likeBtn.disabled = false; }, 600);
+    });
 });
 </script>
 </body>
